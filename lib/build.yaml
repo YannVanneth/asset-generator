@@ -1,0 +1,16 @@
+targets:
+  $default:
+    builders:
+      asset_generator|asset_generator:
+        generate_for:
+          - lib/**
+        options:
+          enabled: true
+
+builders:
+  asset_generator:
+    import: "package:asset_generator/asset_generator/asset_generator.dart"
+    builder_factories: ["assetFolderBuilder"]
+    build_extensions: {".dart": [".g.dart"]}
+    auto_apply: dependents
+    build_to: source

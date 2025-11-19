@@ -1,0 +1,7 @@
+builders:
+  asset_builder:
+    import: "package:asset_generator/asset_generator.dart"
+    builder_factories: ["assetFolderBuilder"]
+    build_extensions: {".dart": [".g.dart"]}
+    auto_apply: dependents
+    build_to: source
