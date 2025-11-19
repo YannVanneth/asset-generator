@@ -1,39 +1,123 @@
-<!--
-This README describes the package. If you publish this package to pub.dev,
-this README's contents appear on the landing page for your package.
+asset_generator
 
-For information about how to write a good package README, see the guide for
-[writing package pages](https://dart.dev/tools/pub/writing-package-pages).
+A Flutter/Dart code generator that automatically creates strongly-typed asset access classes based on the folders you specify.
+No more manually typing long asset paths or worrying about typos — this generator produces a clean, organized API for your project’s assets.
 
-For general information about developing packages, see the Dart guide for
-[creating packages](https://dart.dev/guides/libraries/create-packages)
-and the Flutter guide for
-[developing packages and plugins](https://flutter.dev/to/develop-packages).
--->
+✨ Features
 
-TODO: Put a short description of the package here that helps potential users
-know whether this package might be useful for them.
+🔍 Scans asset folders listed in your pubspec.yaml
 
-## Features
+🛠 Generates a strongly-typed asset context class
 
-TODO: List what your package can do. Maybe include images, gifs, or videos.
+📁 Supports single or multiple folders
 
-## Getting started
+📦 Outputs .g.dart files using source_gen & build_runner
 
-TODO: List prerequisites and provide or point to information on how to
-start using the package.
+🎯 Eliminates string-based asset paths
 
-## Usage
+💡 IDE auto-completion for all assets
 
-TODO: Include short and useful examples for package users. Add longer examples
-to `/example` folder.
+📦 Installation
 
-```dart
-const like = 'sample';
-```
+Add the annotation and generator to your pubspec.yaml:
 
-## Additional information
+dependencies:
+asset_generator:
+git: https://github.com/YannVanneth/asset_generator
 
-TODO: Tell users more about the package: where to find more information, how to
-contribute to the package, how to file issues, what response they can expect
-from the package authors, and more.
+dev_dependencies:
+build_runner: ^2.4.9
+
+
+Replace the Git URL with your actual repository.
+
+🧩 Usage
+1. Add assets to your pubspec.yaml:
+   flutter:
+   assets:
+    - assets/icons/
+    - assets/images/
+
+2. Annotate an abstract class
+   import 'package:asset_generator/asset_generator.dart';
+
+@GenerateAssets(folder: "assets/icons")
+abstract class Icons {}
+
+
+This will generate a file named:
+
+icons.g.dart
+
+
+With a context class:
+
+class _IconsContext {
+// Generated asset getters...
+}
+
+3. Extend the generated context
+   class Icons extends _IconsContext {}
+
+
+Now you can use your assets like this:
+
+Image.asset(Icons.home);
+
+
+With full auto-complete support!
+
+⚙️ Annotation Parameters
+const GenerateAssets({
+this.folder = '',
+this.folders = const [],
+this.className = '',
+});
+
+Parameter	Type	Description
+folder	String	Directory to scan for assets (single folder).
+folders	List<String>	Scan multiple folders.
+className	String	Optional: override the generated context class name.
+📝 Example With Multiple Folders
+@GenerateAssets(
+folders: [
+"assets/icons",
+"assets/images",
+],
+)
+abstract class AppAssets {}
+
+class AppAssets extends _AppAssetsContext {}
+
+🔧 Running the Generator
+
+In your terminal:
+
+dart run build_runner build
+
+
+Or watch mode:
+
+dart run build_runner watch
+
+📁 Output Structure Example
+
+For this folder:
+
+assets/icons/home.png
+assets/icons/user.png
+
+
+The generated class will contain:
+
+static const String home = 'assets/icons/home.png';
+static const String user = 'assets/icons/user.png';
+
+🤝 Contributing
+
+Contributions are welcome!
+Feel free to open issues or pull requests on the GitHub repo.
+
+📄 License
+
+MIT License. Use freely in personal and commercial projects.
