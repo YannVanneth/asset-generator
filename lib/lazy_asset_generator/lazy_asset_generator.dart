@@ -5,7 +5,7 @@ import 'package:build/build.dart';
 import 'package:glob/glob.dart';
 import 'package:source_gen/source_gen.dart';
 import 'annotations.dart';
-import 'package:asset_generator/extension/extensions.dart';
+import 'package:lazy_asset_generator/extension/extensions.dart';
 import 'package:path/path.dart' as p;
 
 class AssetFolderGenerator extends GeneratorForAnnotation<GenerateAssets> {
