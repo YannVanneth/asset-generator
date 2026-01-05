@@ -48,7 +48,13 @@ This document describes the performance optimizations made to the asset generato
 - Maximum 1000 assets per folder limit
 - Early filtering to skip non-image files
 - Deduplication of folder names
-- Warning when limit is reached
+- Fail-fast error when limit is exceeded with clear guidance
+
+When a folder exceeds the limit, the build fails with a clear error message:
+```
+Folder "images" contains 1500 assets, which exceeds the maximum limit of 1000.
+Consider splitting assets into multiple folders or increasing the limit.
+```
 
 ### 6. Code Organization
 **Problem**: The main method was doing too much, making it hard to maintain.
@@ -89,8 +95,13 @@ All changes maintain backward compatibility:
 
 ## Configuration
 
-Two constants can be adjusted if needed:
+Two constants can be adjusted if needed by modifying the source code:
 ```dart
 const int _maxAssetsPerFolder = 1000;  // Max assets per folder
 const int _assetScanTimeoutSeconds = 30;  // Timeout in seconds
 ```
+
+**Note**: If you consistently hit the 1000 asset limit, consider:
+1. Organizing assets into more specific subfolders
+2. Using the `folders` parameter to explicitly list folders
+3. Removing unused assets from your project

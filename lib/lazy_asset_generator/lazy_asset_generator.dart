@@ -78,24 +78,21 @@ class AssetFolderGenerator extends GeneratorForAnnotation<GenerateAssets> {
         final assetsList = await _loadFolderAssets(buildStep, folder);
         log.fine('Found ${assetsList.length} assets in folder: $folder');
         
-        int processedCount = 0;
+        if (assetsList.length > _maxAssetsPerFolder) {
+          throw Exception(
+              'Folder "$folder" contains ${assetsList.length} assets, which exceeds the maximum limit of $_maxAssetsPerFolder. '
+              'Consider splitting assets into multiple folders or increasing the limit.');
+        }
+        
         for (final asset in assetsList) {
-          if (processedCount >= _maxAssetsPerFolder) {
-            log.warning(
-                'Reached maximum asset limit ($_maxAssetsPerFolder) for folder: $folder. '
-                'Skipping remaining assets.');
-            break;
-          }
-          
           final assetName = p.basename(asset.path);
           final id = assetName.sanitizeIdentifier;
           final methodName = folder.sanitizeIdentifier;
           classBuffer.writeln(
               '  final String $id = AssetPath.$methodName("$assetName");');
-          processedCount++;
         }
         
-        log.fine('Processed $processedCount assets from folder: $folder');
+        log.fine('Processed ${assetsList.length} assets from folder: $folder');
       } catch (e) {
         log.severe('Error processing folder $folder: $e');
         throw Exception(
