@@ -114,19 +114,19 @@ class AssetFolderGenerator extends GeneratorForAnnotation<GenerateAssets> {
       final foldersSet = <String>{};
       
       // Scan for assets with timeout protection
-      final assetsFuture = buildStep
+      final assets = await buildStep
           .findAssets(Glob('assets/*'))
           .timeout(
             Duration(seconds: _assetScanTimeoutSeconds),
             onTimeout: (sink) {
-              log.warning(
+              log.severe(
+                  'Asset folder discovery timed out after $_assetScanTimeoutSeconds seconds. '
+                  'This may indicate a slow file system or too many assets.');
+              throw TimeoutException(
                   'Asset folder discovery timed out after $_assetScanTimeoutSeconds seconds');
-              sink.close();
             },
           )
           .toList();
-      
-      final assets = await assetsFuture;
       
       // Extract unique folder names from asset paths
       for (final asset in assets) {
@@ -159,19 +159,19 @@ class AssetFolderGenerator extends GeneratorForAnnotation<GenerateAssets> {
     try {
       // Use non-recursive glob pattern to avoid deep scanning
       // The pattern 'assets/$folder/*' matches only immediate children
-      final assetsFuture = buildStep
+      final assets = await buildStep
           .findAssets(Glob('assets/$folder/*'))
           .timeout(
             Duration(seconds: _assetScanTimeoutSeconds),
             onTimeout: (sink) {
-              log.warning(
-                  'Asset loading timed out for folder: $folder after $_assetScanTimeoutSeconds seconds');
-              sink.close();
+              log.severe(
+                  'Asset loading timed out for folder: $folder after $_assetScanTimeoutSeconds seconds. '
+                  'This may indicate a slow file system or too many assets.');
+              throw TimeoutException(
+                  'Asset loading timed out for folder "$folder" after $_assetScanTimeoutSeconds seconds');
             },
           )
           .toList();
-      
-      final assets = await assetsFuture;
       
       // Filter early to only include image files
       final imageAssets = assets.where((asset) {
