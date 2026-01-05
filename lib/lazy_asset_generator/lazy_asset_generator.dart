@@ -22,7 +22,7 @@ class AssetFolderGenerator extends GeneratorForAnnotation<GenerateAssets> {
 
     if (folderName.isNotEmpty && folders.isNotEmpty) {
       throw Exception(
-          "Invalid @GenerateAsset usage on '${element.name}': "
+          "Invalid @GenerateAsset usage on '${element.name ?? element.displayName}': "
           "both 'folder' and 'folders' are provided. Use only one.");
     }
 
@@ -51,7 +51,7 @@ class AssetFolderGenerator extends GeneratorForAnnotation<GenerateAssets> {
     }
     classBuffer.writeln("}\n");
 
-    final wrapperClassName = element.name;
+    final wrapperClassName = element.name ?? element.displayName;
 
     classBuffer.writeln("abstract class _${wrapperClassName}Context {");
 
