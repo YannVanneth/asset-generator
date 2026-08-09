@@ -1,59 +1,58 @@
-/// An annotation used to generate a strongly-typed asset helper class.
+/// An annotation used to generate a strongly-typed asset access class.
 ///
-/// Apply this annotation to an **abstract class** to automatically generate a
-/// `.g.dart` file containing a typed asset context based on the provided
-/// folder information. The generated class name is based on the annotated
-/// class name and will follow the pattern:
+/// Apply this annotation to a class (or abstract class) to automatically generate a
+/// `.g.dart` file containing a strongly-typed asset context based on your project's
+/// asset directories. The generated class follow the pattern:
 ///
 ///   `_<ClassName>Context`
 ///
-/// To use the generated asset constants, simply extend your annotated class
-/// with its generated context class.
+/// Simply extend your annotated class with the generated context class to gain
+/// auto-completed, strongly-typed accessors to all your assets.
 ///
 /// ---
 ///
 /// ### How It Works
 ///
-/// When the build runner executes, the generator:
-/// - Reads the `folder` or `folders` you specify.
-/// - Scans those directories in your `pubspec.yaml` asset section.
-/// - Generates static, strongly-typed constants for every asset found.
-/// - Groups assets by folder structure when multiple folders are provided.
+/// When `build_runner` executes, the generator:
+/// - Reads the specified target folder(s) from [folder] or [folders].
+/// - Scans those directories for any asset files (images `.png`, `.svg`, data `.json`,
+///   fonts `.ttf`, audio `.mp3`, animations `.rive`/`.lottie`, etc.).
+/// - Sanitizes asset filenames into valid Dart identifiers (`theme.dark.json` -> `themeDark`,
+///   `24_hours.svg` -> `_24Hours`, `default.json` -> `defaultAsset`).
+/// - Excludes hidden system files (e.g. `.DS_Store`, `.gitkeep`).
+/// - Outputs a strongly-typed context class with instant IDE auto-completion.
 ///
 /// ---
 ///
-/// ### Example
+/// ### Example Usage
 ///
 /// ```dart
-/// @GenerateAssets(folder: "icons")
-/// abstract class Icons {}
+/// import 'package:lazy_asset_generator/lazy_asset_generator.dart';
+///
+/// part 'asset_manager.g.dart';
+///
+/// @GenerateAssets(folders: ["Icons", "images", "json"])
+/// class AssetManager extends _AssetManagerContext {}
 /// ```
 ///
-/// This will generate a file: `icons.g.dart` containing:
-///
+/// Access your assets anywhere safely:
 /// ```dart
-/// class _IconsContext {
-///   // generated asset getters here...
-/// }
+/// Image.asset(AssetManager().icons.home);
+/// String jsonPath = AssetManager().json.configDark;
 /// ```
-///
-/// To use the generated context:
-///
-/// ```dart
-/// class Icons extends _IconsContext {}
-/// ```
-///
-/// Now you can access your assets in a typed, auto-completed way.
-///
-/// ---
-///
-/// Use [folder] for a single directory or [folders] for multiple directories.
-/// If [className] is provided, it overrides the generated context class name.
 class GenerateAssets {
+  /// The target folder name under `assets/` to scan for assets (e.g. `"icons"`).
   final String folder;
+
+  /// A list of folder names under `assets/` to scan (e.g. `["icons", "images", "json"]`).
   final List<String> folders;
+
+  /// Optional override for the generated context class name.
   final String className;
 
+  /// Creates a new [@GenerateAssets] annotation.
+  ///
+  /// Specify either [folder] for a single directory or [folders] for multiple directories.
   const GenerateAssets({
     this.folder = '',
     this.folders = const [],
