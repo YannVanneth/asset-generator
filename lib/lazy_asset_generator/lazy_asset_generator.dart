@@ -8,6 +8,10 @@ import 'annotations.dart';
 import 'package:lazy_asset_generator/extension/extensions.dart';
 import 'package:path/path.dart' as p;
 
+/// Code generator for classes annotated with [@GenerateAssets].
+///
+/// Scans configured asset folders, sanitizes asset file names into valid Dart
+/// identifiers, and generates a strongly-typed context class (`_<ClassName>Context`).
 class AssetFolderGenerator extends GeneratorForAnnotation<GenerateAssets> {
   @override
   FutureOr<String> generateForAnnotatedElement(

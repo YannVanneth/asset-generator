@@ -4,10 +4,10 @@ description: >
   based on your project’s asset folders. It scans the directories defined in
   your pubspec and automatically builds typed helpers for cleaner and safer
   asset usage.
-version: 1.4.0
-homepage: https://github.com/YannVanneth/asset_generator
-repository: https://github.com/YannVanneth/asset_generator
-issue_tracker: https://github.com/YannVanneth/asset_generator/issues
+version: 1.4.1
+homepage: https://github.com/YannVanneth/asset-generator
+repository: https://github.com/YannVanneth/asset-generator
+issue_tracker: https://github.com/YannVanneth/asset-generator/issues
 
 environment:
   sdk: '>=3.0.0 <4.0.0'
