@@ -69,7 +69,7 @@ class AssetFolderGenerator extends GeneratorForAnnotation<GenerateAssets> {
       final assets = buildStep.findAssets(Glob('assets/$folder/*'));
       await for (final asset in assets) {
         final assetName = p.basename(asset.path);
-        if (assetName.isImage) {
+        if (assetName.isAsset) {
           final id = assetName.sanitizeIdentifier;
           final methodName = folder.sanitizeIdentifier;
           classBuffer.writeln(
@@ -83,7 +83,9 @@ class AssetFolderGenerator extends GeneratorForAnnotation<GenerateAssets> {
   }
 }
 
-Builder assetFolderBuilder(BuilderOptions options) => LibraryBuilder(
+Builder assetFolderBuilderImpl(BuilderOptions options) => LibraryBuilder(
       AssetFolderGenerator(),
       generatedExtension: ".g.dart",
     );
+
+Builder assetFolderBuilder(BuilderOptions options) => assetFolderBuilderImpl(options);
