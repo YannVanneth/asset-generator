@@ -50,6 +50,13 @@ class GenerateAssets {
   /// Optional override for the generated context class name.
   final String className;
 
+  /// Whether to include assets in nested directories.
+  ///
+  /// When enabled, generated helper groups mirror the directory structure
+  /// below each configured asset folder. The default preserves the original
+  /// top-level-only behavior.
+  final bool recursive;
+
   /// Creates a new [@GenerateAssets] annotation.
   ///
   /// Specify either [folder] for a single directory or [folders] for multiple directories.
@@ -57,5 +64,6 @@ class GenerateAssets {
     this.folder = '',
     this.folders = const [],
     this.className = '',
+    this.recursive = false,
   });
 }

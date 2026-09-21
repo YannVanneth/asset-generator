@@ -1,5 +1,6 @@
 import 'package:lazy_asset_generator/extension/extensions.dart';
 import 'package:lazy_asset_generator/lazy_asset_generator.dart';
+import 'package:lazy_asset_generator/lazy_asset_generator/lazy_asset_generator.dart';
 import 'package:test/test.dart';
 
 void main() {
@@ -64,10 +65,128 @@ void main() {
         folder: 'icons',
         folders: ['icons', 'images'],
         className: 'AppAssets',
+        recursive: true,
       );
       expect(annotation.folder, equals('icons'));
       expect(annotation.folders, equals(['icons', 'images']));
       expect(annotation.className, equals('AppAssets'));
+      expect(annotation.recursive, isTrue);
+    });
+  });
+
+  group('AssetSourceGenerator', () {
+    test('renders deterministic flat output', () {
+      final source = AssetSourceGenerator.generate(
+        inputFileName: 'asset_manager.dart',
+        contextClassName: 'AssetManager',
+        folders: ['images'],
+        assetsByFolder: {
+          'images': [
+            'assets/images/z-last.png',
+            'assets/images/a-first.png',
+            'assets/images/.DS_Store',
+          ],
+        },
+      );
+
+      expect(source, contains("part of 'asset_manager.dart';"));
+      expect(source, contains('abstract class _AssetManagerContext'));
+      expect(
+        source,
+        contains(
+            "static String images(String assetName) => 'assets/images/\$assetName';"),
+      );
+      expect(source, contains('final String aFirst'));
+      expect(source, contains('final String zLast'));
+      expect(source, isNot(contains('DS_Store')));
+      expect(source.indexOf('aFirst'), lessThan(source.indexOf('zLast')));
+    });
+
+    test('mirrors nested directories when recursive is enabled', () {
+      final source = AssetSourceGenerator.generate(
+        inputFileName: 'asset_manager.dart',
+        contextClassName: 'AssetManager',
+        folders: ['images'],
+        assetsByFolder: {
+          'images': [
+            'assets/images/marketing/banner-header.png',
+            'assets/images/marketing/logo.svg',
+          ],
+        },
+        recursive: true,
+      );
+
+      expect(
+          source, contains('_ImagesMarketing marketing = _ImagesMarketing();'));
+      expect(source, contains('final String bannerHeader'));
+      expect(
+        source,
+        contains('AssetPath.images("marketing/banner-header.png")'),
+      );
+    });
+
+    test('fails when sanitized identifiers collide', () {
+      expect(
+        () => AssetSourceGenerator.generate(
+          inputFileName: 'asset_manager.dart',
+          contextClassName: 'AssetManager',
+          folders: ['images'],
+          assetsByFolder: {
+            'images': [
+              'assets/images/logo.png',
+              'assets/images/logo.svg',
+            ],
+          },
+        ),
+        throwsA(
+          predicate<FormatException>(
+            (error) =>
+                error.message.contains('logo') &&
+                error.message.contains('logo.png') &&
+                error.message.contains('logo.svg'),
+          ),
+        ),
+      );
+    });
+
+    test('fails when folder identifiers collide', () {
+      expect(
+        () => AssetSourceGenerator.generate(
+          inputFileName: 'asset_manager.dart',
+          contextClassName: 'AssetManager',
+          folders: ['my-icons', 'my_icons'],
+          assetsByFolder: {
+            'my-icons': ['assets/my-icons/a.png'],
+            'my_icons': ['assets/my_icons/b.png'],
+          },
+        ),
+        throwsA(isA<FormatException>()),
+      );
+    });
+
+    test('rejects empty asset roots', () {
+      expect(
+        () => AssetSourceGenerator.generate(
+          inputFileName: 'asset_manager.dart',
+          contextClassName: 'AssetManager',
+          folders: ['images'],
+          assetsByFolder: const {'images': []},
+        ),
+        throwsA(isA<FormatException>()),
+      );
+    });
+
+    test('uses the configured context class name', () {
+      final source = AssetSourceGenerator.generate(
+        inputFileName: 'asset_manager.dart',
+        contextClassName: 'AppAssets',
+        folders: ['images'],
+        assetsByFolder: const {
+          'images': ['assets/images/logo.png'],
+        },
+      );
+
+      expect(source, contains('abstract class _AppAssetsContext'));
     });
   });
 }
