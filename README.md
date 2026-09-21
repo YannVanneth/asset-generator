@@ -132,7 +132,6 @@ the corresponding generated context:
 @GenerateAssets(folder: "images", className: "AppAssets")
 class AssetManager extends _AppAssetsContext {}
 ```
-
 ---
 
 ## 💡 Before & After

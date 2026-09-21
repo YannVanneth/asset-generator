@@ -31,3 +31,5 @@ migrate_working_dir/
 /coverage/
 example/lib/*.g.dart
 /example/pubspec.lock
+config.bat
+node_modules

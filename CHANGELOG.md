@@ -6,7 +6,6 @@
 - Added generator rendering tests and expanded usage documentation.
 - Added a runnable example project, contribution guide, and GitHub Actions CI
   for formatting, analysis, tests, and package validation.
-
 ## 1.4.1
 - Updated repository, homepage, and issue tracker GitHub URLs to point to `asset-generator`.
 - Enhanced in-code Dart documentation comments across all package components.
