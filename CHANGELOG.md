@@ -1,4 +1,4 @@
-## Unreleased
+## 1.5.0
 - Added opt-in recursive asset scanning with generated groups for nested directories.
 - Added deterministic asset ordering and collision detection for sanitized identifiers.
 - Added validation and actionable errors for empty asset folders, invalid folder paths, and invalid generated class names.
@@ -6,6 +6,7 @@
 - Added generator rendering tests and expanded usage documentation.
 - Added a runnable example project, contribution guide, and GitHub Actions CI
   for formatting, analysis, tests, and package validation.
+
 ## 1.4.1
 - Updated repository, homepage, and issue tracker GitHub URLs to point to `asset-generator`.
 - Enhanced in-code Dart documentation comments across all package components.

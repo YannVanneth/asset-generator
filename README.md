@@ -41,7 +41,7 @@ Add `lazy_asset_generator` and `build_runner` to your `pubspec.yaml`:
 
 ```yaml
 dependencies:
-  lazy_asset_generator: ^1.4.1
+      lazy_asset_generator: ^1.5.0
 
 dev_dependencies:
   build_runner: ^2.4.13
