@@ -56,7 +56,6 @@ class GenerateAssets {
   /// below each configured asset folder. The default preserves the original
   /// top-level-only behavior.
   final bool recursive;
-
   /// Creates a new [@GenerateAssets] annotation.
   ///
   /// Specify either [folder] for a single directory or [folders] for multiple directories.
