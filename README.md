@@ -1,6 +1,6 @@
 # 🖼 Lazy Asset Generator
 
-[![pub package](httpsPlatform="Dart | Flutter" https://img.shields.io/pub/v/lazy_asset_generator.svg)](https://pub.dev/packages/lazy_asset_generator)
+[![pub package](https://img.shields.io/pub/v/lazy_asset_generator.svg)](https://pub.dev/packages/lazy_asset_generator)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/licenses/MIT)
 [![Maintained with Antigravity](https://img.shields.io/badge/Maintained%20with-Google%20Antigravity-4285F4?style=flat&logo=google)](https://github.com/google/antigravity)
 
@@ -76,6 +76,14 @@ part 'asset_manager.g.dart';
 class AssetManager extends _AssetManagerContext {}
 ```
 
+For nested folders, enable recursive generation. The generated helper groups
+mirror the directory structure below each configured folder:
+
+```dart
+@GenerateAssets(folders: ["images"], recursive: true)
+class AssetManager extends _AssetManagerContext {}
+```
+
 ### 3. Run the generator
 
 Execute build_runner in your terminal:
@@ -110,6 +118,21 @@ Widget buildUI() {
 }
 ```
 
+With `recursive: true`, an asset at `assets/images/marketing/banner.png` is
+available as `assets.images.marketing.banner`.
+
+The generator sorts its output and rejects files or folders that sanitize to
+the same Dart identifier. For example, `logo.png` and `logo.svg` in one group
+produce a clear generation error instead of silently overwriting an accessor.
+
+If the generated context needs a different name, use `className` and extend
+the corresponding generated context:
+
+```dart
+@GenerateAssets(folder: "images", className: "AppAssets")
+class AssetManager extends _AppAssetsContext {}
+```
+
 ---
 
 ## 💡 Before & After
@@ -128,7 +151,14 @@ Image.asset(AssetManager().icons.homeIcon); // Checked at compile time!
 
 ## 🤝 Contributing
 
-Contributions are welcome! Feel free to submit pull requests or open issues on the [GitHub Repository](https://github.com/YannVanneth/asset-generator).
+Contributions are welcome! See [CONTRIBUTING.md](CONTRIBUTING.md) for local
+checks, the end-to-end example, and pull request guidelines. You can also open
+issues on the [GitHub Repository](https://github.com/YannVanneth/asset-generator).
+
+### Example project
+
+The [`example/`](example/) project demonstrates recursive generation and can be
+run with `dart run build_runner build --delete-conflicting-outputs`.
 
 ---
 

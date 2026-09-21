@@ -10,4 +10,5 @@ import 'package:build/build.dart';
 import 'package:lazy_asset_generator/lazy_asset_generator/lazy_asset_generator.dart';
 
 /// Builder factory invoked by `build_runner` to construct the [AssetFolderGenerator].
-Builder assetFolderBuilder(BuilderOptions options) => assetFolderBuilderImpl(options);
+Builder assetFolderBuilder(BuilderOptions options) =>
+    assetFolderBuilderImpl(options);
