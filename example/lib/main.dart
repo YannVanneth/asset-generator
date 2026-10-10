@@ -1,7 +1,9 @@
+import 'dart:io';
+
 import 'asset_manager.dart';
 
 void main() {
   final assets = AssetManager();
-  print(assets.images.marketing.banner);
-  print(assets.data.config);
+  stdout.writeln(assets.images.marketing.banner);
+  stdout.writeln(assets.data.config);
 }

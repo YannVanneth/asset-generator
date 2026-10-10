@@ -1,6 +1,6 @@
 /// An annotation used to generate a strongly-typed asset access class.
 ///
-/// Apply this annotation to a class (or abstract class) to automatically generate a
+/// Apply this annotation to one class (or abstract class) per library to generate a
 /// `.g.dart` file containing a strongly-typed asset context based on your project's
 /// asset directories. The generated class follow the pattern:
 ///
@@ -14,7 +14,10 @@
 /// ### How It Works
 ///
 /// When `build_runner` executes, the generator:
-/// - Reads the specified target folder(s) from [folder] or [folders].
+/// - Reads the specified target folder(s) from [folder] or [folders], or discovers
+///   directories under `assets/` when neither option is supplied.
+/// - Scans files directly; Flutter asset declarations in pubspec.yaml must be
+///   maintained separately by the application.
 /// - Scans those directories for any asset files (images `.png`, `.svg`, data `.json`,
 ///   fonts `.ttf`, audio `.mp3`, animations `.rive`/`.lottie`, etc.).
 /// - Sanitizes asset filenames into valid Dart identifiers (`theme.dark.json` -> `themeDark`,
@@ -59,7 +62,10 @@ class GenerateAssets {
 
   /// Creates a new [@GenerateAssets] annotation.
   ///
-  /// Specify either [folder] for a single directory or [folders] for multiple directories.
+  /// Specify either [folder] for a single directory or [folders] for multiple
+  /// directories. With neither, visible directories under `assets/` are discovered.
+  /// Paths must be relative to `assets/`, without traversal or glob patterns.
+  /// Empty configured folders and colliding generated identifiers are errors.
   const GenerateAssets({
     this.folder = '',
     this.folders = const [],

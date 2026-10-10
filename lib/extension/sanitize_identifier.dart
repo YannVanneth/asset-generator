@@ -71,19 +71,25 @@ extension SanitizeIdentifier on String {
     'yield',
   };
 
+  /// Whether [name] is reserved by Dart identifier sanitization.
+  static bool isDartKeyword(String name) => _dartKeywords.contains(name);
+
   String get sanitizeIdentifier {
     if (isEmpty) return '_';
 
     final lastDotIndex = lastIndexOf('.');
     final baseName = (lastDotIndex > 0) ? substring(0, lastDotIndex) : this;
 
-    final parts =
-        baseName.split(RegExp(r'[^a-zA-Z0-9]')).where((p) => p.isNotEmpty);
+    final parts = baseName
+        .split(RegExp(r'[^a-zA-Z0-9]'))
+        .where((p) => p.isNotEmpty);
     if (parts.isEmpty) return '_asset';
 
     final first = parts.first.toLowerCase();
-    final rest =
-        parts.skip(1).map((e) => e[0].toUpperCase() + e.substring(1)).join();
+    final rest = parts
+        .skip(1)
+        .map((e) => e[0].toUpperCase() + e.substring(1))
+        .join();
     var name = '$first$rest';
 
     if (RegExp(r'^[0-9]').hasMatch(name)) {

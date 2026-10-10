@@ -1,6 +1,11 @@
 # Example
 
 This example demonstrates recursive generation across multiple asset folders.
+Use Dart 3.8 or later. The included banner is a small PNG fixture.
+
+The generator scans `assets/` directly. In a Flutter application, declare the
+nested `assets/images/marketing/` directory (or the banner file) separately to
+bundle it; the example itself is a Dart command-line program.
 
 From the repository root, run:
 

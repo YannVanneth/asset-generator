@@ -2,7 +2,8 @@
 
 ## Local checks
 
-Before opening a pull request, run:
+Use Dart 3.8 or later. CI tests both Dart 3.8.0 and stable; formatting and
+publication validation use stable. Before opening a pull request, run:
 
 ```bash
 dart pub get
@@ -11,6 +12,10 @@ dart analyze
 dart test
 dart pub publish --dry-run
 ```
+
+The test suite includes a clean temporary consumer package. It resolves dependencies
+from the local pub cache (`dart pub get --offline`), then builds, analyzes, executes,
+and checks incremental updates. Run `dart pub get` first to populate the cache.
 
 To verify the end-to-end example:
 

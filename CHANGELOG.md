@@ -1,3 +1,13 @@
+## 1.6.0
+- Escape interpolation characters, quotes, backslashes, and control characters in generated asset paths.
+- Validate folder paths before normalization and report invalid annotations at their source.
+- Detect inherited-member, helper/context, and existing library declaration collisions.
+- Require one annotated asset manager per library and reject non-class targets.
+- Use shared-part generation so `.g.dart` outputs can coexist with other generators; keep the existing builder identifier and generated API.
+- Align dependency floors with the analyzer API and require Dart 3.8 or later.
+- Restore the missing example image and clarify filesystem discovery versus Flutter asset declarations.
+- Add executable rendering, builder integration, and clean consumer incremental-build tests; test Dart 3.8 and stable in CI.
+
 ## 1.5.0
 - Added opt-in recursive asset scanning with generated groups for nested directories.
 - Added deterministic asset ordering and collision detection for sanitized identifiers.

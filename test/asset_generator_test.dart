@@ -94,7 +94,8 @@ void main() {
       expect(
         source,
         contains(
-            "static String images(String assetName) => 'assets/images/\$assetName';"),
+          "static String images(String assetName) => 'assets/images/\$assetName';",
+        ),
       );
       expect(source, contains('final String aFirst'));
       expect(source, contains('final String zLast'));
@@ -117,7 +118,9 @@ void main() {
       );
 
       expect(
-          source, contains('_ImagesMarketing marketing = _ImagesMarketing();'));
+        source,
+        contains('_ImagesMarketing marketing = _ImagesMarketing();'),
+      );
       expect(source, contains('final String bannerHeader'));
       expect(
         source,
@@ -132,10 +135,7 @@ void main() {
           contextClassName: 'AssetManager',
           folders: ['images'],
           assetsByFolder: {
-            'images': [
-              'assets/images/logo.png',
-              'assets/images/logo.svg',
-            ],
+            'images': ['assets/images/logo.png', 'assets/images/logo.svg'],
           },
         ),
         throwsA(

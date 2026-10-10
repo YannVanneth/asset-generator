@@ -2,6 +2,7 @@ builders:
   asset_builder:
     import: "package:lazy_asset_generator/builder.dart"
     builder_factories: ["assetFolderBuilder"]
-    build_extensions: {".dart": [".g.dart"]}
+    build_extensions: {".dart": [".lazy_asset_generator.g.part"]}
     auto_apply: dependents
-    build_to: source
+    build_to: cache
+    applies_builders: ["source_gen:combining_builder"]

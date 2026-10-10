@@ -2,6 +2,7 @@ library;
 
 import 'dart:async';
 
+import 'package:analyzer/dart/element/element.dart';
 import 'package:build/build.dart';
 import 'package:glob/glob.dart';
 import 'package:path/path.dart' as p;
@@ -13,18 +14,50 @@ import 'package:lazy_asset_generator/extension/extensions.dart';
 /// Generates strongly-typed asset paths for classes annotated with
 /// [GenerateAssets].
 class AssetFolderGenerator extends GeneratorForAnnotation<GenerateAssets> {
+  AssetFolderGenerator() : super(inPackage: 'lazy_asset_generator');
+
+  @override
+  FutureOr<String> generate(LibraryReader library, BuildStep buildStep) async {
+    final managers = library.annotatedWith(typeChecker).toList();
+    if (managers.length > 1) {
+      throw InvalidGenerationSourceError(
+        'Only one @GenerateAssets manager is supported per library. '
+        'Move each manager to a separate library.',
+        element: managers.last.element,
+      );
+    }
+    return await super.generate(library, buildStep);
+  }
+
   @override
   FutureOr<String> generateForAnnotatedElement(
-    element,
-    annotation,
-    buildStep,
+    Element element,
+    ConstantReader annotation,
+    BuildStep buildStep,
+  ) async {
+    if (element is! ClassElement) {
+      throw InvalidGenerationSourceError(
+        '@GenerateAssets must annotate a class.',
+        element: element,
+      );
+    }
+    try {
+      return await _generate(element, annotation, buildStep);
+    } on FormatException catch (error) {
+      throw InvalidGenerationSourceError(error.message, element: element);
+    }
+  }
+
+  Future<String> _generate(
+    ClassElement element,
+    ConstantReader annotation,
+    BuildStep buildStep,
   ) async {
     final folderName = _readString(annotation, 'folder');
     final folders = annotation
         .read('folders')
         .listValue
         .map((value) => value.toStringValue() ?? '')
-        .where((folder) => folder.isNotEmpty)
         .toList();
     final recursive = annotation.read('recursive').boolValue;
     final configuredClassName = _readString(annotation, 'className');
@@ -39,8 +72,8 @@ class AssetFolderGenerator extends GeneratorForAnnotation<GenerateAssets> {
     final targetFolders = folderName.isNotEmpty
         ? [folderName]
         : folders.isNotEmpty
-            ? folders
-            : await _discoverFolders(buildStep, recursive);
+        ? folders
+        : await _discoverFolders(buildStep, recursive);
 
     if (targetFolders.isEmpty) {
       throw FormatException(
@@ -75,8 +108,22 @@ class AssetFolderGenerator extends GeneratorForAnnotation<GenerateAssets> {
         : configuredClassName;
     _validateClassName(className);
 
-    return AssetSourceGenerator.generate(
+    return AssetSourceGenerator._generate(
       inputFileName: p.basename(buildStep.inputId.path),
+      includePartDirective: false,
+      existingNames: LibraryReader(element.library).allElements
+          .where(
+            (declaration) => declaration.fragments.any((fragment) {
+              final path = fragment.libraryFragment?.source.uri.path;
+              return path != null &&
+                  !path.endsWith(
+                    '/${p.basename(buildStep.inputId.changeExtension('.g.dart').path)}',
+                  );
+            }),
+          )
+          .map((declaration) => declaration.name)
+          .whereType<String>()
+          .toSet(),
       contextClassName: className,
       folders: assetsByFolder.keys,
       assetsByFolder: assetsByFolder,
@@ -115,6 +162,22 @@ class AssetSourceGenerator {
     required Iterable<String> folders,
     required Map<String, Iterable<String>> assetsByFolder,
     bool recursive = false,
+  }) => _generate(
+    inputFileName: inputFileName,
+    contextClassName: contextClassName,
+    folders: folders,
+    assetsByFolder: assetsByFolder,
+    recursive: recursive,
+  );
+
+  static String _generate({
+    required String inputFileName,
+    required String contextClassName,
+    required Iterable<String> folders,
+    required Map<String, Iterable<String>> assetsByFolder,
+    bool recursive = false,
+    bool includePartDirective = true,
+    Set<String> existingNames = const {},
   }) {
     _validateClassName(contextClassName);
     final normalizedFolders = folders.map(_normalizeFolder).toSet().toList()
@@ -149,17 +212,26 @@ class AssetSourceGenerator {
       }
       if (root.isEmpty) {
         throw FormatException(
-            "No visible assets were found in 'assets/$folder/'.");
+          "No visible assets were found in 'assets/$folder/'.",
+        );
       }
       trees[folder] = root;
     }
 
     _validateUniqueNames(normalizedFolders, trees);
-    _validateGeneratedClassNames(normalizedFolders, trees);
+    _validateGeneratedClassNames(
+      normalizedFolders,
+      trees,
+      contextClassName,
+      existingNames,
+    );
 
-    final output = StringBuffer()
-      ..writeln("part of '${_quote(inputFileName)}';")
-      ..writeln()
+    final output = StringBuffer();
+    if (includePartDirective) {
+      output.writeln("part of '${_quote(inputFileName)}';");
+      output.writeln();
+    }
+    output
       ..writeln('class AssetPath {')
       ..writeln('  const AssetPath._();')
       ..writeln();
@@ -220,6 +292,7 @@ class AssetSourceGenerator {
     final rootNames = <String, String>{};
     for (final folder in folders) {
       final name = folder.sanitizeIdentifier;
+      _validateMemberName(name, folder);
       final previous = rootNames[name];
       if (previous != null && previous != folder) {
         _throwCollision(name, 'folders', [previous, folder]);
@@ -232,11 +305,24 @@ class AssetSourceGenerator {
   static void _validateGeneratedClassNames(
     List<String> folders,
     Map<String, _AssetNode> trees,
+    String contextClassName,
+    Set<String> existingNames,
   ) {
-    final classNames = <String, String>{};
+    final classNames = <String, String>{
+      'AssetPath': 'asset path utility',
+      '_${contextClassName}Context': 'generated context',
+    };
     for (final folder in folders) {
       _recordClassName(classNames, _classNameFor(folder, const []), folder);
       _walkClassNames(trees[folder]!, folder, const [], classNames);
+    }
+    for (final name in classNames.keys) {
+      if (existingNames.contains(name)) {
+        throw FormatException(
+          "Generated declaration '$name' conflicts with "
+          'an existing library declaration. Rename the declaration or asset folder.',
+        );
+      }
     }
   }
 
@@ -248,7 +334,11 @@ class AssetSourceGenerator {
   ) {
     for (final entry in node.children.entries) {
       final path = [...parentSegments, entry.key];
-      _recordClassName(classNames, _classNameFor(folder, path), path.join('/'));
+      _recordClassName(
+        classNames,
+        _classNameFor(folder, path),
+        '$folder/${path.join('/')}',
+      );
       _walkClassNames(entry.value, folder, path, classNames);
     }
   }
@@ -259,9 +349,11 @@ class AssetSourceGenerator {
     String source,
   ) {
     final previous = classNames[className];
-    if (previous != null && previous != source) {
-      _throwCollision(
-          className, 'generated helper classes', [previous, source]);
+    if (previous != null) {
+      _throwCollision(className, 'generated helper classes', [
+        previous,
+        source,
+      ]);
     }
     classNames[className] = source;
   }
@@ -290,19 +382,22 @@ class AssetSourceGenerator {
     String folder,
     List<String> parentSegments,
   ) {
+    _validateMemberName(name, source);
     final previous = names[name];
     if (previous != null && previous != source) {
-      _throwCollision(
-        name,
-        "'assets/$folder/${parentSegments.join('/')}'",
-        [previous, source],
-      );
+      _throwCollision(name, "'assets/$folder/${parentSegments.join('/')}'", [
+        previous,
+        source,
+      ]);
     }
     names[name] = source;
   }
 
   static void _throwCollision(
-      String name, String location, List<String> paths) {
+    String name,
+    String location,
+    List<String> paths,
+  ) {
     throw FormatException(
       "Asset identifier collision for '$name' in $location: "
       "${paths.join(' and ')}. Rename one of the assets or folders.",
@@ -318,16 +413,20 @@ class AssetSourceGenerator {
     final className = _classNameFor(folder, pathSegments);
     output.writeln('class $className {');
 
-    for (final entry in root.children.entries.toList()
-      ..sort((a, b) => a.key.compareTo(b.key))) {
-      final childClassName =
-          _classNameFor(folder, [...pathSegments, entry.key]);
+    for (final entry
+        in root.children.entries.toList()
+          ..sort((a, b) => a.key.compareTo(b.key))) {
+      final childClassName = _classNameFor(folder, [
+        ...pathSegments,
+        entry.key,
+      ]);
       final childName = entry.key.sanitizeIdentifier;
       output.writeln('  $childClassName $childName = $childClassName();');
     }
 
-    for (final file in root.files.toList()
-      ..sort((a, b) => a.assetPath.compareTo(b.assetPath))) {
+    for (final file
+        in root.files.toList()
+          ..sort((a, b) => a.assetPath.compareTo(b.assetPath))) {
       final identifier = file.path.sanitizeIdentifier;
       final methodName = folder.sanitizeIdentifier;
       output.writeln(
@@ -339,8 +438,9 @@ class AssetSourceGenerator {
       ..writeln('}')
       ..writeln();
 
-    for (final entry in root.children.entries.toList()
-      ..sort((a, b) => a.key.compareTo(b.key))) {
+    for (final entry
+        in root.children.entries.toList()
+          ..sort((a, b) => a.key.compareTo(b.key))) {
       _renderNode(
         output,
         root: entry.value,
@@ -379,25 +479,40 @@ String _readString(ConstantReader annotation, String field) =>
     annotation.read(field).stringValue;
 
 String _normalizeFolder(String folder) {
-  final normalized = p.posix.normalize(folder.replaceAll('\\', '/'));
-  final trimmed = normalized
-      .replaceFirst(RegExp(r'^/+'), '')
+  final portable = folder.replaceAll('\\', '/');
+  final segments = portable.split('/');
+  if (portable.isEmpty ||
+      p.posix.isAbsolute(portable) ||
+      p.windows.isAbsolute(folder) ||
+      RegExp(r'^[A-Za-z]:').hasMatch(portable) ||
+      segments.any((segment) => segment == '.' || segment == '..') ||
+      RegExp(r'[*?\[\]{}]').hasMatch(portable)) {
+    throw FormatException(
+      "Invalid asset folder '$folder'. "
+      'Use a relative folder under assets/ without traversal or glob patterns.',
+    );
+  }
+  final normalized = p.posix
+      .normalize(portable)
       .replaceFirst(RegExp(r'/+$'), '');
-  if (trimmed.isEmpty || trimmed == '.' || trimmed.split('/').contains('..')) {
+  if (normalized.isEmpty || normalized == '.') {
     throw FormatException("Invalid asset folder '$folder'.");
   }
-  return trimmed;
+  return normalized;
 }
 
 bool _isVisibleAsset(String path) {
   if (path.isEmpty) return false;
   final segments = path.replaceAll('\\', '/').split('/');
-  return segments
-      .every((segment) => segment.isNotEmpty && !segment.startsWith('.'));
+  return segments.every(
+    (segment) => segment.isNotEmpty && !segment.startsWith('.'),
+  );
 }
 
 void _validateClassName(String name) {
-  if (!RegExp(r'^[A-Za-z_][A-Za-z0-9_]*$').hasMatch(name)) {
+  if (!RegExp(r'^[A-Za-z_][A-Za-z0-9_]*$').hasMatch(name) ||
+      name == '_' ||
+      SanitizeIdentifier.isDartKeyword(name)) {
     throw FormatException(
       "Invalid className '$name'. Use a valid Dart class identifier.",
     );
@@ -407,12 +522,35 @@ void _validateClassName(String name) {
 String _quote(String value) => value
     .replaceAll('\\', '\\\\')
     .replaceAll('"', '\\"')
-    .replaceAll("'", "\\'");
-
-Builder assetFolderBuilderImpl(BuilderOptions options) => LibraryBuilder(
-      AssetFolderGenerator(),
-      generatedExtension: '.g.dart',
+    .replaceAll("'", "\\'")
+    .replaceAll(r'$', r'\$')
+    .replaceAll('\n', r'\n')
+    .replaceAll('\r', r'\r')
+    .replaceAll('\t', r'\t')
+    .replaceAll('\b', r'\b')
+    .replaceAll('\f', r'\f')
+    .replaceAllMapped(
+      RegExp(r'[\x00-\x1f\x7f]'),
+      (match) =>
+          '\\u${match[0]!.codeUnitAt(0).toRadixString(16).padLeft(4, '0')}',
     );
+
+void _validateMemberName(String name, String source) {
+  if (const {
+    'hashCode',
+    'runtimeType',
+    'toString',
+    'noSuchMethod',
+  }.contains(name)) {
+    throw FormatException(
+      "Asset identifier '$name' from '$source' conflicts "
+      'with an inherited Dart member. Rename the asset or folder.',
+    );
+  }
+}
+
+Builder assetFolderBuilderImpl(BuilderOptions options) =>
+    SharedPartBuilder([AssetFolderGenerator()], 'lazy_asset_generator');
 
 Builder assetFolderBuilder(BuilderOptions options) =>
     assetFolderBuilderImpl(options);

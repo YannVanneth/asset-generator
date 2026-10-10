@@ -15,7 +15,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        sdk: [stable]
+        sdk: ['3.8.0', stable]
 
     steps:
       - name: Check out repository
@@ -30,6 +30,7 @@ jobs:
         run: dart pub get
 
       - name: Check formatting
+        if: matrix.sdk == 'stable'
         run: dart format --output=none --set-exit-if-changed .
 
       - name: Analyze
@@ -39,6 +40,7 @@ jobs:
         run: dart test
 
       - name: Validate package contents
+        if: matrix.sdk == 'stable'
         run: dart pub publish --dry-run
 
       - name: Validate example generation
