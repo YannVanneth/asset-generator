@@ -11,7 +11,8 @@ void main() {
       final tempDir = Directory.systemTemp.createTempSync('ffi_test_');
       addTearDown(() => tempDir.deleteSync(recursive: true));
 
-      final imgDir = Directory(p.join(tempDir.path, 'assets', 'images'))..createSync(recursive: true);
+      final imgDir = Directory(p.join(tempDir.path, 'assets', 'images'))
+        ..createSync(recursive: true);
       File(p.join(imgDir.path, 'logo.png')).writeAsStringSync('png');
 
       final engine = NativeAssetEngine();
@@ -33,7 +34,10 @@ void main() {
 
       expect(code, contains("part of 'asset_manager.dart';"));
       expect(code, contains('abstract class _AssetManagerContext'));
-      expect(code, contains('final String logo = AssetPath.images("logo.png");'));
+      expect(
+        code,
+        contains('final String logo = AssetPath.images("logo.png");'),
+      );
 
       final outFile = File(p.join(tempDir.path, 'lib', 'asset_manager.g.dart'));
       expect(outFile.existsSync(), isTrue);
@@ -51,7 +55,8 @@ void main() {
       final tempDir = Directory.systemTemp.createTempSync('ffi_fallback_test_');
       addTearDown(() => tempDir.deleteSync(recursive: true));
 
-      final imgDir = Directory(p.join(tempDir.path, 'assets', 'images'))..createSync(recursive: true);
+      final imgDir = Directory(p.join(tempDir.path, 'assets', 'images'))
+        ..createSync(recursive: true);
       File(p.join(imgDir.path, 'icon.png')).writeAsStringSync('png');
 
       final engine = NativeAssetEngine();
@@ -73,7 +78,10 @@ void main() {
 
       expect(code, contains("part of 'fallback.dart';"));
       expect(code, contains('abstract class _FallbackAssetsContext'));
-      expect(code, contains('final String icon = AssetPath.images("icon.png");'));
+      expect(
+        code,
+        contains('final String icon = AssetPath.images("icon.png");'),
+      );
     });
   });
 }

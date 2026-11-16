@@ -15,10 +15,14 @@ class DartAssetGenerator {
     final assetsByFolder = <String, List<String>>{};
 
     for (final folder in config.folders) {
-      final normalizedFolder = folder.replaceAll(r'\', '/').replaceAll(RegExp(r'^/+|/+$'), '');
+      final normalizedFolder = folder
+          .replaceAll(r'\', '/')
+          .replaceAll(RegExp(r'^/+|/+$'), '');
       final dir = Directory(p.join(projectRoot, 'assets', normalizedFolder));
       if (!dir.existsSync()) {
-        throw FormatException("No visible assets were found in 'assets/$normalizedFolder/'.");
+        throw FormatException(
+          "No visible assets were found in 'assets/$normalizedFolder/'.",
+        );
       }
 
       final assets = <String>[];
@@ -26,7 +30,9 @@ class DartAssetGenerator {
         if (entity is! File) continue;
 
         // Skip hidden files or files in hidden folders
-        final relativeToProject = p.relative(entity.path, from: projectRoot).replaceAll(r'\', '/');
+        final relativeToProject = p
+            .relative(entity.path, from: projectRoot)
+            .replaceAll(r'\', '/');
         final segments = relativeToProject.split('/');
         if (segments.any((s) => s.startsWith('.'))) continue;
 
@@ -35,7 +41,9 @@ class DartAssetGenerator {
 
       assets.sort();
       if (assets.isEmpty) {
-        throw FormatException("No visible assets were found in 'assets/$normalizedFolder/'.");
+        throw FormatException(
+          "No visible assets were found in 'assets/$normalizedFolder/'.",
+        );
       }
       assetsByFolder[normalizedFolder] = assets;
     }

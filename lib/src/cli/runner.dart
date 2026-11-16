@@ -63,7 +63,12 @@ class CliRunner {
     }
 
     // Perform initial generation
-    final success = _generateAll(projectRoot, configs, forceDart: forceDart, verbose: verbose);
+    final success = _generateAll(
+      projectRoot,
+      configs,
+      forceDart: forceDart,
+      verbose: verbose,
+    );
     if (!success && !watchMode) {
       return 1;
     }

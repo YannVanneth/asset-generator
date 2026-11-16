@@ -34,27 +34,33 @@ void main() {
       );
     });
 
-    test('throws FormatException if multiple managers exist in the same library', () {
-      const source = '''
+    test(
+      'throws FormatException if multiple managers exist in the same library',
+      () {
+        const source = '''
         @GenerateAssets(folders: ['images'])
         class Manager1 extends _Manager1Context {}
 
         @GenerateAssets(folders: ['data'])
         class Manager2 extends _Manager2Context {}
       ''';
-      expect(
-        () => AnnotationParser.parseSource(source, 'lib/multi.dart'),
-        throwsA(isA<FormatException>()),
-      );
-    });
+        expect(
+          () => AnnotationParser.parseSource(source, 'lib/multi.dart'),
+          throwsA(isA<FormatException>()),
+        );
+      },
+    );
   });
 
   group('DartAssetGenerator', () {
     test('generates Dart code from filesystem assets', () {
-      final tempDir = Directory.systemTemp.createTempSync('dart_asset_gen_test_');
+      final tempDir = Directory.systemTemp.createTempSync(
+        'dart_asset_gen_test_',
+      );
       addTearDown(() => tempDir.deleteSync(recursive: true));
 
-      final imageDir = Directory(p.join(tempDir.path, 'assets', 'images'))..createSync(recursive: true);
+      final imageDir = Directory(p.join(tempDir.path, 'assets', 'images'))
+        ..createSync(recursive: true);
       File(p.join(imageDir.path, 'logo.png')).writeAsStringSync('png');
 
       const config = AssetConfig(
@@ -73,7 +79,10 @@ void main() {
 
       expect(code, contains("part of 'assets.dart';"));
       expect(code, contains('abstract class _AppAssetsContext'));
-      expect(code, contains('final String logo = AssetPath.images("logo.png");'));
+      expect(
+        code,
+        contains('final String logo = AssetPath.images("logo.png");'),
+      );
 
       final writtenFile = File(p.join(tempDir.path, 'lib', 'assets.g.dart'));
       expect(writtenFile.existsSync(), isTrue);

@@ -106,10 +106,43 @@ class AnnotationParser {
     var configuredClassName = '';
 
     if (args != null) {
-      for (final arg in args) {
-        if (arg is! NamedArgument) continue;
-        final name = arg.name.lexeme;
-        final expression = arg.argumentExpression;
+      for (final dynamic arg in args) {
+        final typeName = arg.runtimeType.toString();
+        if (!typeName.startsWith('NamedArgument') &&
+            !typeName.startsWith('NamedExpression')) {
+          continue;
+        }
+
+        String? name;
+        Expression? expression;
+
+        try {
+          final dynamic argName = arg.name;
+          if (argName != null) {
+            try {
+              final dynamic label = argName.label;
+              name = label is SimpleIdentifier ? label.name : label?.toString();
+            } catch (_) {}
+            name ??= (argName.lexeme as String?);
+          }
+        } catch (_) {}
+
+        try {
+          final dynamic expr = arg.argumentExpression;
+          if (expr is Expression) {
+            expression = expr;
+          }
+        } catch (_) {}
+        if (expression == null) {
+          try {
+            final dynamic expr = arg.expression;
+            if (expr is Expression) {
+              expression = expr;
+            }
+          } catch (_) {}
+        }
+
+        if (name == null || expression == null) continue;
 
         switch (name) {
           case 'folder':
@@ -135,9 +168,21 @@ class AnnotationParser {
       }
     }
 
-    final className = configuredClassName.isNotEmpty
-        ? configuredClassName
-        : classDecl.namePart.typeName.lexeme;
+    String className = configuredClassName;
+    if (className.isEmpty) {
+      final dynamic dynClass = classDecl;
+      try {
+        final dynamic namePart = dynClass.namePart;
+        className = (namePart?.typeName?.lexeme as String?) ?? '';
+      } catch (_) {}
+
+      if (className.isEmpty) {
+        try {
+          final dynamic nameToken = dynClass.name;
+          className = (nameToken?.lexeme as String?) ?? '';
+        } catch (_) {}
+      }
+    }
 
     if (folderName.isNotEmpty && folders.isNotEmpty) {
       throw FormatException(
