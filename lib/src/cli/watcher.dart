@@ -25,7 +25,9 @@ class AssetWatcher {
 
   /// Starts watching `assets/` and `lib/`.
   Future<void> start() async {
-    stdout.writeln('[WATCH] Watching assets/ and lib/ for changes... (Press Ctrl+C to stop)');
+    stdout.writeln(
+      '[WATCH] Watching assets/ and lib/ for changes... (Press Ctrl+C to stop)',
+    );
 
     final assetsDir = Directory(p.join(projectRoot, 'assets'));
     if (assetsDir.existsSync()) {
@@ -68,7 +70,8 @@ class AssetWatcher {
     final eventPath = p.normalize(event.path);
 
     // If a new directory was created, watch it too
-    if (event.type == FileSystemEvent.create && FileSystemEntity.isDirectorySync(eventPath)) {
+    if (event.type == FileSystemEvent.create &&
+        FileSystemEntity.isDirectorySync(eventPath)) {
       _watchRecursively(Directory(eventPath));
     }
 
@@ -103,9 +106,13 @@ class AssetWatcher {
         );
       }
       sw.stop();
-      stdout.writeln('[WATCH] $relPath changed -> Regenerated in ${sw.elapsedMilliseconds}ms');
+      stdout.writeln(
+        '[WATCH] $relPath changed -> Regenerated in ${sw.elapsedMilliseconds}ms',
+      );
     } catch (e) {
-      stderr.writeln('[WATCH ERROR] Failed to regenerate on $relPath change: $e');
+      stderr.writeln(
+        '[WATCH ERROR] Failed to regenerate on $relPath change: $e',
+      );
     }
   }
 

@@ -7,14 +7,10 @@ import 'package:lazy_asset_generator/src/generator/dart_asset_generator.dart';
 import 'package:lazy_asset_generator/src/parser/annotation_parser.dart';
 import 'package:path/path.dart' as p;
 
-typedef _GenerateNative = Pointer<Utf8> Function(
-  Pointer<Utf8> root,
-  Pointer<Utf8> configJson,
-);
-typedef _GenerateDart = Pointer<Utf8> Function(
-  Pointer<Utf8> root,
-  Pointer<Utf8> configJson,
-);
+typedef _GenerateNative =
+    Pointer<Utf8> Function(Pointer<Utf8> root, Pointer<Utf8> configJson);
+typedef _GenerateDart =
+    Pointer<Utf8> Function(Pointer<Utf8> root, Pointer<Utf8> configJson);
 
 typedef _FreeStringNative = Void Function(Pointer<Utf8> ptr);
 typedef _FreeStringDart = void Function(Pointer<Utf8> ptr);
@@ -53,9 +49,10 @@ class NativeAssetEngine {
         _generateFn = dylib.lookupFunction<_GenerateNative, _GenerateDart>(
           'lazy_asset_generate',
         );
-        _freeStringFn = dylib.lookupFunction<_FreeStringNative, _FreeStringDart>(
-          'lazy_asset_free_string',
-        );
+        _freeStringFn = dylib
+            .lookupFunction<_FreeStringNative, _FreeStringDart>(
+              'lazy_asset_free_string',
+            );
         _dylib = dylib;
       } else {
         _loadError = 'Native library not found and could not be built.';
@@ -69,14 +66,18 @@ class NativeAssetEngine {
   static String? resolvePackageRoot([String? startDir]) {
     var current = Directory(startDir ?? Directory.current.path);
     while (true) {
-      final configJson = File(p.join(current.path, '.dart_tool', 'package_config.json'));
+      final configJson = File(
+        p.join(current.path, '.dart_tool', 'package_config.json'),
+      );
       if (configJson.existsSync()) {
         try {
-          final data = jsonDecode(configJson.readAsStringSync()) as Map<String, dynamic>;
+          final data =
+              jsonDecode(configJson.readAsStringSync()) as Map<String, dynamic>;
           final packages = data['packages'] as List<dynamic>?;
           if (packages != null) {
             for (final pkg in packages) {
-              if (pkg is Map<String, dynamic> && pkg['name'] == 'lazy_asset_generator') {
+              if (pkg is Map<String, dynamic> &&
+                  pkg['name'] == 'lazy_asset_generator') {
                 final rootUriStr = pkg['rootUri'] as String;
                 final resolvedUri = configJson.uri.resolve(rootUriStr);
                 return p.normalize(resolvedUri.toFilePath());
@@ -120,11 +121,17 @@ class NativeAssetEngine {
 
     final candidates = <String>[];
     if (packageRoot != null) {
-      candidates.add(p.join(packageRoot, 'native', 'target', 'release', libName));
+      candidates.add(
+        p.join(packageRoot, 'native', 'target', 'release', libName),
+      );
       candidates.add(p.join(packageRoot, '.dart_tool', 'native', libName));
     }
-    candidates.add(p.join(Directory.current.path, 'native', 'target', 'release', libName));
-    candidates.add(p.join(Directory.current.path, '.dart_tool', 'native', libName));
+    candidates.add(
+      p.join(Directory.current.path, 'native', 'target', 'release', libName),
+    );
+    candidates.add(
+      p.join(Directory.current.path, '.dart_tool', 'native', libName),
+    );
 
     for (final candidate in candidates) {
       final file = File(p.normalize(candidate));
@@ -138,10 +145,12 @@ class NativeAssetEngine {
       try {
         final check = Process.runSync('cargo', ['--version']);
         if (check.exitCode == 0) {
-          final build = Process.runSync(
-            'cargo',
-            ['build', '--release', '--manifest-path', cargoToml.path],
-          );
+          final build = Process.runSync('cargo', [
+            'build',
+            '--release',
+            '--manifest-path',
+            cargoToml.path,
+          ]);
           if (build.exitCode == 0) {
             final builtFile = File(
               p.join(rootForCargo, 'native', 'target', 'release', libName),
