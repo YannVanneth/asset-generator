@@ -1,0 +1,13 @@
+[package]
+name = "lazy_asset_core"
+version = "0.1.0"
+edition = "2021"
+
+[lib]
+name = "lazy_asset_core"
+crate-type = ["cdylib", "rlib"]
+
+[dependencies]
+walkdir = "2.5"
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"

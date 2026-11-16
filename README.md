@@ -26,7 +26,7 @@ dependency:
 
 ```yaml
 dependencies:
-  lazy_asset_generator: ^1.6.0
+  lazy_asset_generator: ^1.7.0
 
 dev_dependencies:
   build_runner: ^2.8.0
@@ -82,11 +82,31 @@ libraries.
 
 ### 3. Generate the accessors
 
+#### Instant Standalone CLI (Recommended)
+
+Generate your asset accessors in milliseconds (< 5ms) without waiting for `build_runner`:
+
+```bash
+dart run lazy_asset_generator
+```
+
+For continuous, automatic regeneration whenever assets or managers are added, renamed, or deleted:
+
+```bash
+dart run lazy_asset_generator --watch
+```
+
+> **Performance & Portability**: Powered by a native Rust engine via Dart FFI with native OS file events. If the native binary is not present and Cargo is not installed, it automatically and seamlessly falls back to the pure Dart generator with zero configuration.
+
+#### Using `build_runner` (Alternative)
+
+If your project already runs `build_runner` for other code generators:
+
 ```bash
 dart run build_runner build --delete-conflicting-outputs
 ```
 
-For continuous generation while editing assets:
+Or for watch mode:
 
 ```bash
 dart run build_runner watch
