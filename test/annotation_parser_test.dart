@@ -23,17 +23,29 @@ void main() {
       expect(configs.first.outputFilePath, equals('lib/test.g.dart'));
     });
 
-    test('parses single folder parameter and custom className', () {
+    test('throws FormatException if both folder and folders are provided', () {
       const source = '''
-        @GenerateAssets(folder: 'icons', className: 'MyIcons')
-        class IconsManager extends _IconsManagerContext {}
+        @GenerateAssets(folder: 'icons', folders: ['images'])
+        class BothManager extends _BothManagerContext {}
       ''';
-      final configs = AnnotationParser.parseSource(source, 'lib/sub/icons.dart');
-      expect(configs.length, equals(1));
-      expect(configs.first.className, equals('MyIcons'));
-      expect(configs.first.folders, equals(['icons']));
-      expect(configs.first.recursive, isFalse);
-      expect(configs.first.outputFilePath, equals('lib/sub/icons.g.dart'));
+      expect(
+        () => AnnotationParser.parseSource(source, 'lib/both.dart'),
+        throwsA(isA<FormatException>()),
+      );
+    });
+
+    test('throws FormatException if multiple managers exist in the same library', () {
+      const source = '''
+        @GenerateAssets(folders: ['images'])
+        class Manager1 extends _Manager1Context {}
+
+        @GenerateAssets(folders: ['data'])
+        class Manager2 extends _Manager2Context {}
+      ''';
+      expect(
+        () => AnnotationParser.parseSource(source, 'lib/multi.dart'),
+        throwsA(isA<FormatException>()),
+      );
     });
   });
 

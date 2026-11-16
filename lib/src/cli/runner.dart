@@ -24,13 +24,22 @@ class CliRunner {
         forceDart = true;
       } else if (arg == '--verbose' || arg == '-v') {
         verbose = true;
+      } else if (arg.startsWith('--path=')) {
+        projectRoot = p.normalize(p.absolute(arg.substring('--path='.length)));
       } else if (arg == '--path') {
         if (i + 1 < args.length) {
           projectRoot = p.normalize(p.absolute(args[++i]));
+        } else {
+          stderr.writeln('[ERROR] Missing value for --path argument.');
+          return 1;
         }
       } else if (arg == '--help' || arg == '-h') {
         _printHelp();
         return 0;
+      } else {
+        stderr.writeln('[ERROR] Unrecognized argument: $arg');
+        _printHelp();
+        return 1;
       }
     }
 

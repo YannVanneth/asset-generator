@@ -29,16 +29,16 @@ class AssetWatcher {
 
     final assetsDir = Directory(p.join(projectRoot, 'assets'));
     if (assetsDir.existsSync()) {
-      _subscriptions.add(
-        assetsDir.watch(recursive: true).listen(_onFileSystemEvent),
+      _watchRecursively(assetsDir);
+    } else {
+      stdout.writeln(
+        '[WATCH WARNING] assets/ directory not found in $projectRoot.',
       );
     }
 
     final libDir = Directory(p.join(projectRoot, 'lib'));
     if (libDir.existsSync()) {
-      _subscriptions.add(
-        libDir.watch(recursive: true).listen(_onFileSystemEvent),
-      );
+      _watchRecursively(libDir);
     }
 
     // Handle process signals for graceful exit
@@ -50,8 +50,27 @@ class AssetWatcher {
     await _doneCompleter.future;
   }
 
+  void _watchRecursively(Directory dir) {
+    _subscriptions.add(dir.watch().listen(_onFileSystemEvent));
+    try {
+      for (final entity in dir.listSync(followLinks: false)) {
+        if (entity is Directory) {
+          final name = p.basename(entity.path);
+          if (!name.startsWith('.')) {
+            _watchRecursively(entity);
+          }
+        }
+      }
+    } catch (_) {}
+  }
+
   void _onFileSystemEvent(FileSystemEvent event) {
     final eventPath = p.normalize(event.path);
+
+    // If a new directory was created, watch it too
+    if (event.type == FileSystemEvent.create && FileSystemEntity.isDirectorySync(eventPath)) {
+      _watchRecursively(Directory(eventPath));
+    }
 
     // Ignore generated .g.dart files to prevent infinite loops
     if (eventPath.endsWith('.g.dart')) return;

@@ -65,21 +65,75 @@ class NativeAssetEngine {
     }
   }
 
+  /// Resolves the root directory of the `lazy_asset_generator` package.
+  static String? resolvePackageRoot([String? startDir]) {
+    var current = Directory(startDir ?? Directory.current.path);
+    while (true) {
+      final configJson = File(p.join(current.path, '.dart_tool', 'package_config.json'));
+      if (configJson.existsSync()) {
+        try {
+          final data = jsonDecode(configJson.readAsStringSync()) as Map<String, dynamic>;
+          final packages = data['packages'] as List<dynamic>?;
+          if (packages != null) {
+            for (final pkg in packages) {
+              if (pkg is Map<String, dynamic> && pkg['name'] == 'lazy_asset_generator') {
+                final rootUriStr = pkg['rootUri'] as String;
+                final resolvedUri = configJson.uri.resolve(rootUriStr);
+                return p.normalize(resolvedUri.toFilePath());
+              }
+            }
+          }
+        } catch (_) {}
+      }
+
+      final pubspec = File(p.join(current.path, 'pubspec.yaml'));
+      if (pubspec.existsSync()) {
+        try {
+          final content = pubspec.readAsStringSync();
+          if (content.contains('name: lazy_asset_generator')) {
+            return current.path;
+          }
+        } catch (_) {}
+      }
+
+      final parent = current.parent;
+      if (parent.path == current.path) break;
+      current = parent;
+    }
+
+    if (Platform.script.scheme == 'file') {
+      try {
+        final scriptPath = Platform.script.toFilePath();
+        final scriptDir = Directory(p.dirname(scriptPath));
+        if (File(p.join(scriptDir.parent.path, 'pubspec.yaml')).existsSync()) {
+          return scriptDir.parent.path;
+        }
+      } catch (_) {}
+    }
+
+    return null;
+  }
+
   File? _findOrBuildLibrary() {
     final libName = _libraryFileName;
-    final candidates = [
-      p.join(Directory.current.path, 'native', 'target', 'release', libName),
-      p.join(Directory.current.path, '.dart_tool', 'native', libName),
-      p.join(Platform.script.path, '..', '..', 'native', 'target', 'release', libName),
-    ];
+    final packageRoot = resolvePackageRoot();
+
+    final candidates = <String>[];
+    if (packageRoot != null) {
+      candidates.add(p.join(packageRoot, 'native', 'target', 'release', libName));
+      candidates.add(p.join(packageRoot, '.dart_tool', 'native', libName));
+    }
+    candidates.add(p.join(Directory.current.path, 'native', 'target', 'release', libName));
+    candidates.add(p.join(Directory.current.path, '.dart_tool', 'native', libName));
 
     for (final candidate in candidates) {
       final file = File(p.normalize(candidate));
       if (file.existsSync()) return file;
     }
 
-    // Try auto-compiling if Cargo is present
-    final cargoToml = File(p.join(Directory.current.path, 'native', 'Cargo.toml'));
+    // Try auto-compiling if Cargo is present at packageRoot or current directory
+    final rootForCargo = packageRoot ?? Directory.current.path;
+    final cargoToml = File(p.join(rootForCargo, 'native', 'Cargo.toml'));
     if (cargoToml.existsSync()) {
       try {
         final check = Process.runSync('cargo', ['--version']);
@@ -90,7 +144,7 @@ class NativeAssetEngine {
           );
           if (build.exitCode == 0) {
             final builtFile = File(
-              p.join(Directory.current.path, 'native', 'target', 'release', libName),
+              p.join(rootForCargo, 'native', 'target', 'release', libName),
             );
             if (builtFile.existsSync()) return builtFile;
           }

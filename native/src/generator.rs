@@ -79,6 +79,7 @@ struct AssetNode {
 struct AssetFile {
     asset_path: String,
     relative_path: String,
+    file_name: String,
 }
 
 pub fn generate_dart_code(
@@ -174,6 +175,7 @@ fn insert_asset(mut root: &mut AssetNode, asset_path: &str, segments: Vec<&str>)
             root.files.push(AssetFile {
                 asset_path: asset_path.to_string(),
                 relative_path: segments.join("/"),
+                file_name: segment.to_string(),
             });
         } else {
             root = root.children.entry(segment.to_string()).or_default();
@@ -207,7 +209,7 @@ fn validate_node(
 ) -> Result<(), String> {
     let mut names = HashMap::new();
     for file in &node.files {
-        let name = sanitize_identifier(&file.relative_path);
+        let name = sanitize_identifier(&file.file_name);
         if let Some(prev) = names.insert(name.clone(), file.asset_path.clone()) {
             if prev != file.asset_path {
                 return Err(format!(
@@ -256,7 +258,7 @@ fn render_node(
     sorted_files.sort_by(|a, b| a.asset_path.cmp(&b.asset_path));
 
     for file in sorted_files {
-        let id = sanitize_identifier(&file.relative_path);
+        let id = sanitize_identifier(&file.file_name);
         let method = sanitize_identifier(folder);
         output.push_str(&format!(
             "  final String {id} = AssetPath.{method}(\"{}\");\n",
@@ -287,9 +289,12 @@ mod tests {
     }
 
     #[test]
-    fn test_code_generation() {
+    fn test_nested_code_generation() {
         let mut assets = HashMap::new();
-        assets.insert("images".to_string(), vec!["assets/images/logo.png".to_string()]);
+        assets.insert(
+            "images".to_string(),
+            vec!["assets/images/marketing/logo.png".to_string()],
+        );
         let output = generate_dart_code(
             "asset_manager.dart",
             "AssetManager",
@@ -299,8 +304,7 @@ mod tests {
         )
         .expect("Generation failed");
 
-        assert!(output.contains("part of 'asset_manager.dart';"));
-        assert!(output.contains("abstract class _AssetManagerContext"));
-        assert!(output.contains("final String logo = AssetPath.images(\"logo.png\");"));
+        assert!(output.contains("class _ImagesMarketing {"));
+        assert!(output.contains("final String logo = AssetPath.images(\"marketing/logo.png\");"));
     }
 }

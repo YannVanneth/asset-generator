@@ -74,8 +74,11 @@ pub unsafe extern "C" fn lazy_asset_generate(
 }
 
 fn return_error(msg: &str) -> *mut c_char {
-    let err_msg = format!("__ERROR__: {msg}");
-    CString::new(err_msg).unwrap().into_raw()
+    let sanitized = msg.replace('\0', " ");
+    let err_msg = format!("__ERROR__: {sanitized}");
+    CString::new(err_msg)
+        .unwrap_or_else(|_| CString::new("__ERROR__: Internal error creating error message").unwrap())
+        .into_raw()
 }
 
 #[no_mangle]

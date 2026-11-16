@@ -63,6 +63,15 @@ class AnnotationParser {
           }
         }
       }
+
+      if (configs.length > 1) {
+        throw FormatException(
+          'Only one @GenerateAssets manager is supported per library ($filePath). '
+          'Move each manager to a separate library.',
+        );
+      }
+    } on FormatException {
+      rethrow;
     } catch (_) {
       // Ignored for malformed files
     }
@@ -126,13 +135,20 @@ class AnnotationParser {
       }
     }
 
-    final targetFolders = folderName.isNotEmpty
-        ? [folderName]
-        : (folders.isNotEmpty ? folders : <String>[]);
-
     final className = configuredClassName.isNotEmpty
         ? configuredClassName
         : classDecl.namePart.typeName.lexeme;
+
+    if (folderName.isNotEmpty && folders.isNotEmpty) {
+      throw FormatException(
+        "Invalid @GenerateAssets usage on '$className': "
+        "both 'folder' and 'folders' are provided. Use only one.",
+      );
+    }
+
+    final targetFolders = folderName.isNotEmpty
+        ? [folderName]
+        : (folders.isNotEmpty ? folders : <String>[]);
 
     final outputFilePath = p.setExtension(targetFilePath, '.g.dart');
 

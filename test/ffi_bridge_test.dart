@@ -40,6 +40,13 @@ void main() {
       expect(outFile.readAsStringSync(), equals(code));
     });
 
+    test('NativeAssetEngine resolves package root from consumer project', () {
+      final exampleDir = p.join(Directory.current.path, 'example');
+      final packageRoot = NativeAssetEngine.resolvePackageRoot(exampleDir);
+      expect(packageRoot, isNotNull);
+      expect(File(p.join(packageRoot!, 'pubspec.yaml')).existsSync(), isTrue);
+    });
+
     test('NativeAssetEngine supports forceDart fallback', () {
       final tempDir = Directory.systemTemp.createTempSync('ffi_fallback_test_');
       addTearDown(() => tempDir.deleteSync(recursive: true));
