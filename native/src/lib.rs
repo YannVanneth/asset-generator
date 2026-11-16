@@ -1,4 +1,5 @@
-#[no_mangle]
-pub extern "C" fn lazy_asset_ping() -> i32 {
-    42
-}
+pub mod ffi;
+pub mod generator;
+pub mod scanner;
+
+pub use ffi::*;
