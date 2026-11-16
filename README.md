@@ -26,7 +26,7 @@ dependency:
 
 ```yaml
 dependencies:
-  lazy_asset_generator: ^1.6.0
+  lazy_asset_generator: ^1.7.0
 
 dev_dependencies:
   build_runner: ^2.8.0

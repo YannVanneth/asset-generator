@@ -3,7 +3,7 @@ description: >
   A Flutter code generator that creates strongly-typed asset access classes
   based on your project’s asset folders. It scans directories under assets/
   and automatically builds typed helpers for cleaner and safer asset usage.
-version: 1.6.0
+version: 1.7.0
 homepage: https://github.com/YannVanneth/asset-generator
 repository: https://github.com/YannVanneth/asset-generator
 issue_tracker: https://github.com/YannVanneth/asset-generator/issues

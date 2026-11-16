@@ -1,3 +1,11 @@
+## 1.7.0
+- Add instant standalone CLI executable (`dart run lazy_asset_generator`) to generate asset accessors in milliseconds without invoking `build_runner`.
+- Add continuous file watcher daemon (`dart run lazy_asset_generator --watch`) with recursive directory watching, debouncing, and loop prevention.
+- Add high-performance native Rust core in `native/` integrated via Dart FFI (`dart:ffi`) for sub-3ms generation.
+- Add zero-configuration pure Dart fallback engine that runs automatically when the native binary is not pre-compiled and Cargo is missing.
+- Add AST annotation parser using `package:analyzer` to extract `@GenerateAssets` configuration in milliseconds.
+- Preserve 100% backward compatibility with existing `build_runner` workflows.
+
 ## 1.6.0
 - Escape interpolation characters, quotes, backslashes, and control characters in generated asset paths.
 - Validate folder paths before normalization and report invalid annotations at their source.
